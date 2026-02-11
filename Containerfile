@@ -20,7 +20,6 @@ RUN apt update \
     && npm i \
     && npm run build \
     && npm install mediasoup-spacebar-wrtc --save \
-    && npm install pg --save \
     && apt autoremove -y \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
