@@ -20,7 +20,10 @@ RUN apt update \
     && npm i \
     && npm run build \
     && npm install mediasoup-spacebar-wrtc --save \
-    && npm install pg --save
+    && npm install pg --save \
+    && apt autoremove -y \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Runner
 FROM    ${IMAGE_REPOSITORY}:${IMAGE_VERSION} AS runner
@@ -31,20 +34,25 @@ ARG     TARGETOS
 ARG     TARGETARCH
 
 ENV     DEBIAN_FRONTEND="noninteractive" \
-        PORT="3001" \
+        WRTC_LIBRARY="mediasoup-spacebar-wrtc" \
         WRTC_WS_PORT="3004" \
-        DB_SYNC="false" \
-        DB_LOGGING="false" \
         CONFIG_PATH="/app/configs" \
         STORAGE_PROVIDER="file" \
         STORAGE_LOCATION="/app/storage" \
+        DB_SYNC="false" \
+        DB_LOGGING="false" \
         LOG_REQUESTS="-200" \
-        WRTC_LIBRARY="mediasoup-spacebar-wrtc"
+        PORT="3001" \
+        TINI_SUBREAPER=1
 
-RUN addgroup \
-    --system \
-    --gid ${CONT_UID} \
-    ${CONT_USER} \
+RUN apt update \
+    && apt upgrade -y \
+    && apt install -y --no-install-recommends \
+        tini \
+    && addgroup \
+        --system \
+        --gid ${CONT_UID} \
+        ${CONT_USER} \
     && adduser \
         --home "/app" \
         --shell "/bin/bash" \
@@ -52,7 +60,10 @@ RUN addgroup \
         --ingroup ${CONT_USER} \
         --disabled-password \
         ${CONT_USER} \
-    && mkdir -p /app/storage /app/configs
+    && mkdir -p /app/storage /app/configs \
+    && apt autoremove -y \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY    --from=spacebar-builder --chmod=0550 /app/src /app/spacebar
 
@@ -61,4 +72,4 @@ RUN chown -Rf ${CONT_UID}:${CONT_UID} /app
 USER    ${CONT_UID}:${CONT_UID}
 WORKDIR /app/spacebar
 
-ENTRYPOINT node --enable-source-maps dist/bundle/start.js
+ENTRYPOINT ["tini", "--", "node", "--enable-source-maps", "dist/bundle/start.js"]
