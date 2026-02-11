@@ -1,5 +1,5 @@
 ARG     IMAGE_REPOSITORY=public.ecr.aws/docker/library/node
-ARG     IMAGE_VERSION=trixie-slim
+ARG     IMAGE_VERSION=lts-trixie
 
 # Build out the project
 FROM    ${IMAGE_REPOSITORY}:${IMAGE_VERSION} AS spacebar-builder
@@ -47,16 +47,17 @@ RUN addgroup \
     ${CONT_USER} \
     && adduser \
         --home "/app" \
-        --shell "/bin/sh" \
+        --shell "/bin/bash" \
         --uid ${CONT_UID} \
         --ingroup ${CONT_USER} \
         --disabled-password \
         ${CONT_USER} \
     && mkdir -p /app/storage /app/configs
 
-COPY    --from=spacebar-builder --chmod=0550 /app/src /app/spacebar
+COPY    --from=spacebar-builder --chmod=0700 /app/src /app/spacebar
 
 RUN chown -Rf spacebar:spacebar /app \
+    chmod -R 0700 /app \ 
     && ls -la /app
 
 USER    spacebar:spacebar
