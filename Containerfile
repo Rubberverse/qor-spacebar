@@ -54,13 +54,11 @@ RUN addgroup \
         ${CONT_USER} \
     && mkdir -p /app/storage /app/configs
 
-COPY    --from=spacebar-builder --chmod=0700 /app/src /app/spacebar
+COPY    --from=spacebar-builder --chmod=0550 /app/src /app/spacebar
 
-RUN chown -Rf spacebar:spacebar /app \
-    && chmod -R 0700 /app \ 
-    && ls -la /app
+RUN chown -Rf ${CONT_UID}:${CONT_UID} /app 
 
-USER    spacebar:spacebar
+USER    ${CONT_UID}:${CONT_UID}
 WORKDIR /app/spacebar
 
 ENTRYPOINT node --enable-source-maps dist/bundle/start.js
